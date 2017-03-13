@@ -52,7 +52,7 @@ class SwiftJS {
                     
                     let json = try JSON.parse(from: messageData, allowingComments: false) as! JSONObject
                     
-                    callStatic(typeName: String(json["t"])!, methodName: String(json["m"])!)
+                    callStatic(typeName: String(json["t"])!, methodName: String(json["m"])!, arguments: json["args"] as? JSONObject)
                 }
             } catch {
                 print("error: \(error)")

@@ -23,9 +23,29 @@ function swiftMessage(msg) {
 
 module.exports.SwiftClass = {
   
-    testFunc: function() {
-      swiftMessage({a: "callStatic", t: "SwiftClass", m: "testFunc"})
-    }
+    testFunc: function(
+      
+    ) {
+      swiftMessage({a: "callStatic", t: "SwiftClass", m: "testFunc",
+        
+      })
+    },
+  
+    testFuncWithArgument: function(
+      
+        text
+      
+    ) {
+      swiftMessage({a: "callStatic", t: "SwiftClass", m: "testFuncWithArgument",
+        
+        args: {
+          
+            text
+          
+        }
+        
+      })
+    },
   
 };
 

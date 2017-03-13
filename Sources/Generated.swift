@@ -2,12 +2,23 @@
 // DO NOT EDIT
 
 
-func callStatic(typeName: String, methodName: String) {
+import Cheetah
+
+func callStatic(typeName: String, methodName: String, arguments: JSONObject?) {
   switch (typeName, methodName) {
   
     
       case ("SwiftClass", "testFunc"):
-        SwiftClass.testFunc()
+        SwiftClass.testFunc(
+          
+        )
+    
+      case ("SwiftClass", "testFuncWithArgument"):
+        SwiftClass.testFuncWithArgument(
+          
+            text: String(arguments!["text"])!
+          
+        )
     
   
 

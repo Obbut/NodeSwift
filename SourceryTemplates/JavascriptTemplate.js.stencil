@@ -19,9 +19,21 @@ function swiftMessage(msg) {
 
 module.exports.{{type.name}} = {
   {% for method in type.allMethods|annotated:"jsAvailable" %}
-    {{ method.shortName }}: function() {
-      swiftMessage({a: "callStatic", t: "{{type.name}}", m: "{{method.shortName}}"})
-    }
+    {{ method.shortName }}: function(
+      {% for param in method.parameters %}
+        {{ param.name }}{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ) {
+      swiftMessage({a: "callStatic", t: "{{type.name}}", m: "{{method.shortName}}",
+        {% if method.parameters.count > 0 %}
+        args: {
+          {% for param in method.parameters %}
+            {{ param.name }}{% if not forloop.last %},{% endif %}
+          {% endfor %}
+        }
+        {% endif %}
+      })
+    },
   {% endfor %}
 };
 
