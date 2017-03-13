@@ -1,5 +1,28 @@
-var s = null;
 
+
+{% for protocol in types.protocols|annotated:"jsAvailable" %}
+
+/**
+Packs a JavaScript object conforming to the {{protocol.name}} protocol defined in Swift
+
+@parameter {object} obj The object to pack
+*/
+function pack{{protocol.name}}(obj) {
+  return {
+    {% for var in protocol.allVariables %}
+      {% if var.type.annotations.jsAvailable and var.type.kind == "protocol" %}
+      {{ var.name }}: pack{{var.type.name}}(obj.{{var.name}})
+      {% else %}
+      {{ var.name }}: obj.{{ var.name }}
+      {% endif %}
+      {% if not forloop.last %},{% endif %}
+    {% endfor %}
+  };
+}
+
+{% endfor %}
+
+var s = null;
 function swiftMessage(msg) {
   if (s == null) {
     s = require('net').Socket();
@@ -28,7 +51,12 @@ module.exports.{{type.name}} = {
         {% if method.parameters.count > 0 %}
         args: {
           {% for param in method.parameters %}
-            {{ param.name }}{% if not forloop.last %},{% endif %}
+            {% if param.type.annotations.jsAvailable and param.type.kind == "protocol" %}
+            {{ param.name }}: pack{{param.unwrappedTypeName}}({{param.name}})
+            {% else %}
+            {{ param.name }}
+            {% endif %}
+            {% if not forloop.last %},{% endif %}
           {% endfor %}
         }
         {% endif %}

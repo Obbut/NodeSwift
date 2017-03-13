@@ -2,8 +2,52 @@
 // DO NOT EDIT
 
 
-var s = null;
 
+
+
+
+/**
+Packs a JavaScript object conforming to the LogType protocol defined in Swift
+
+@parameter {object} obj The object to pack
+*/
+function packLogType(obj) {
+  return {
+    
+      
+      text1: packTextContaining(obj.text1)
+      
+      ,
+    
+      
+      text2: packTextContaining(obj.text2)
+      
+      
+    
+  };
+}
+
+
+
+/**
+Packs a JavaScript object conforming to the TextContaining protocol defined in Swift
+
+@parameter {object} obj The object to pack
+*/
+function packTextContaining(obj) {
+  return {
+    
+      
+      text: obj.text
+      
+      
+    
+  };
+}
+
+
+
+var s = null;
 function swiftMessage(msg) {
   if (s == null) {
     s = require('net').Socket();
@@ -21,12 +65,12 @@ function swiftMessage(msg) {
 
 
 
-module.exports.SwiftClass = {
+module.exports.SwiftLogger = {
   
     testFunc: function(
       
     ) {
-      swiftMessage({a: "callStatic", t: "SwiftClass", m: "testFunc",
+      swiftMessage({a: "callStatic", t: "SwiftLogger", m: "testFunc",
         
       })
     },
@@ -36,11 +80,52 @@ module.exports.SwiftClass = {
         text
       
     ) {
-      swiftMessage({a: "callStatic", t: "SwiftClass", m: "testFuncWithArgument",
+      swiftMessage({a: "callStatic", t: "SwiftLogger", m: "testFuncWithArgument",
         
         args: {
           
+            
             text
+            
+            
+          
+        }
+        
+      })
+    },
+  
+    logTextContaining: function(
+      
+        containing
+      
+    ) {
+      swiftMessage({a: "callStatic", t: "SwiftLogger", m: "logTextContaining",
+        
+        args: {
+          
+            
+            containing: packTextContaining(containing)
+            
+            
+          
+        }
+        
+      })
+    },
+  
+    logUsingRecursiveProtocol: function(
+      
+        object
+      
+    ) {
+      swiftMessage({a: "callStatic", t: "SwiftLogger", m: "logUsingRecursiveProtocol",
+        
+        args: {
+          
+            
+            object: packLogType(object)
+            
+            
           
         }
         
