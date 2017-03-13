@@ -8,10 +8,10 @@ func callStatic(typeName: String, methodName: String) {
     
       case ("SwiftClass", "testFunc"):
         SwiftClass.testFunc()
-
-      default:
-        fatalError()
     
   
+
+  default:
+    fatalError()
   }
 }

@@ -8,6 +8,13 @@
 
 import Foundation
 
+Thread {
+    print("starting")
+    try! SwiftJS.run()
+}.start()
+
 Process.launchedProcess(launchPath: "/usr/local/bin/node", arguments: ["js/main.js"])
 
-try! SwiftJS.run()
+while true {
+    Thread.sleep(forTimeInterval: 10)
+}

@@ -28,14 +28,24 @@ class SwiftJS {
         try server.startWithHandler { client in
             do {
                 var buffer = [UInt8]()
+                
+                func bufferHasMessage() throws -> Bool {
+                    guard buffer.count >= 4 else { return false }
+                    let length: Int32 = try fromBytes(buffer[0..<4])
+                    guard buffer.count >= Int(length)+4 else { return false }
+                    return true
+                }
+                
                 while true {
                     // receive data
-                    let data = try client.receiveAll()
-                    buffer += data
+                    if !(try bufferHasMessage()) {
+                        let data = try client.receiveAll()
+                        buffer += data
+                    }
                     
-                    guard buffer.count >= 4 else { continue }
+                    guard try bufferHasMessage() else { continue }
+                    
                     let length: Int32 = try fromBytes(buffer[0..<4])
-                    guard buffer.count >= Int(length)+4 else { continue }
                     
                     let messageData = Array(buffer[4..<Int(length+4)])
                     buffer.removeSubrange(0..<Int(length)+4)
