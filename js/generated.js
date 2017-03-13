@@ -2,7 +2,8 @@
 // DO NOT EDIT
 
 
-
+var packedObjects = {};
+var nextPackedObjectIdentifier = 0;
 
 
 /**
@@ -11,9 +12,17 @@ Packs a JavaScript object conforming to the LogType protocol defined in Swift
 @parameter {object} obj The object to pack
 */
 function packLogType(obj) {
+  let oid = nextPackedObjectIdentifier;
+  nextPackedObjectIdentifier++;
+
+  packedObjects[oid] = obj;
+
   return {
+    // assign the object identifier
+    oid
+    ,
       text1: packTextContaining(obj.text1)
-      ,
+    ,
       text2: packTextContaining(obj.text2)
   };
 }
@@ -25,7 +34,15 @@ Packs a JavaScript object conforming to the TextContaining protocol defined in S
 @parameter {object} obj The object to pack
 */
 function packTextContaining(obj) {
+  let oid = nextPackedObjectIdentifier;
+  nextPackedObjectIdentifier++;
+
+  packedObjects[oid] = obj;
+
   return {
+    // assign the object identifier
+    oid
+    ,
       text: obj.text
   };
 }
@@ -62,8 +79,12 @@ function swiftMessage(msg) {
       buffer = buffer.slice(4+messageLength, byteCount-1);
 
       // handle message
-      if (typeof messagePromises[message.id] == "object") {
+      if (message.id > 0 && typeof messagePromises[message.id] == "object") {
+        // response
         messagePromises[message.id].resolve(message);
+      } else if (message.id < 0) {
+        // message from the server
+        handleServerMessage(message);
       }
     });
   }
@@ -95,6 +116,15 @@ function swiftMessage(msg) {
   promiseObject.promise.then(cleanup, cleanup);
 
   return promiseObject.promise;
+}
+
+function handleServerMessage(message) {
+  switch (message.a) {
+    case "call":
+      packedObjects[message.oid][message.f]()
+      return;
+    default: throw "Unknown action " + message.a;
+  }
 }
 
 
@@ -132,3 +162,4 @@ module.exports.SwiftLogger = {
       })
     },
 };
+

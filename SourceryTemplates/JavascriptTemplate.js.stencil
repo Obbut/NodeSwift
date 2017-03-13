@@ -1,4 +1,5 @@
-
+var packedObjects = {};
+var nextPackedObjectIdentifier = 0;
 
 {% for protocol in types.protocols|annotated:"jsAvailable" %}
 
@@ -8,14 +9,20 @@ Packs a JavaScript object conforming to the {{protocol.name}} protocol defined i
 @parameter {object} obj The object to pack
 */
 function pack{{protocol.name}}(obj) {
+  let oid = nextPackedObjectIdentifier;
+  nextPackedObjectIdentifier++;
+
+  packedObjects[oid] = obj;
+
   return {
-    {% for var in protocol.allVariables %}
+    // assign the object identifier
+    oid
+    {% for var in protocol.allVariables %},
       {% if var.type.annotations.jsAvailable and var.type.kind == "protocol" %}
       {{ var.name }}: pack{{var.type.name}}(obj.{{var.name}})
       {% else %}
       {{ var.name }}: obj.{{ var.name }}
       {% endif %}
-      {% if not forloop.last %},{% endif %}
     {% endfor %}
   };
 }
@@ -53,8 +60,12 @@ function swiftMessage(msg) {
       buffer = buffer.slice(4+messageLength, byteCount-1);
 
       // handle message
-      if (typeof messagePromises[message.id] == "object") {
-        messagePromises.resolve(message);
+      if (message.id > 0 && typeof messagePromises[message.id] == "object") {
+        // response
+        messagePromises[message.id].resolve(message);
+      } else if (message.id < 0) {
+        // message from the server
+        handleServerMessage(message);
       }
     });
   }
@@ -86,6 +97,15 @@ function swiftMessage(msg) {
   promiseObject.promise.then(cleanup, cleanup);
 
   return promiseObject.promise;
+}
+
+function handleServerMessage(message) {
+  switch (message.a) {
+    case "call":
+      packedObjects[message.oid][message.f]()
+      return;
+    default: throw "Unknown action " + message.a;
+  }
 }
 
 {% for type in types.all|annotated:"jsAvailable" %}

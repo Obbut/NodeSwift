@@ -1,6 +1,6 @@
 import Cheetah
 
-func callStatic(typeName: String, methodName: String, arguments: JSONObject?) throws {
+func callStatic(typeName: String, methodName: String, arguments: JSONObject?, client: JavascriptClient) throws {
   switch (typeName, methodName) {
   {% for type in types.all|annotated:"jsAvailable" %}
     {% for method in type.allMethods|annotated:"jsAvailable" %}
@@ -8,7 +8,7 @@ func callStatic(typeName: String, methodName: String, arguments: JSONObject?) th
         {{ type.name }}.{{ method.shortName }}(
           {% for param in method.parameters %}
             {% if param.type.annotations.jsAvailable and param.type.kind == "protocol" %}
-              {{ param.argumentLabel }}: try {{ param.unwrappedTypeName }}FromJavascript(unpacking: arguments!["{{param.name}}"] as! JSONObject)
+              {{ param.argumentLabel }}: try {{ param.unwrappedTypeName }}FromJavascript(unpacking: arguments!["{{param.name}}"] as! JSONObject, client: client)
             {% else %}
               {{ param.argumentLabel }}: {{ param.typeName }}(arguments!["{{param.name}}"])!
             {% endif %}
@@ -26,29 +26,44 @@ func callStatic(typeName: String, methodName: String, arguments: JSONObject?) th
 {% for protocol in types.protocols|annotated:"jsAvailable" %}
 
 class {{protocol.name}}FromJavascript : {{ protocol.name }} {
+
+    private var jsIdentifier: Int
+    private var client: JavascriptClient
+
     {% for var in protocol.allVariables %}
     var {{ var.name }}: {{ var.typeName }}
     {% endfor %}
 
-    init(unpacking json: JSONObject) throws {
+    init(unpacking json: JSONObject, client: JavascriptClient) throws {
         guard
-          {% for var in protocol.allVariables %}
-            {% if var.type.annotations.jsAvailable and var.type.kind == "protocol" %}
-              let {{var.name}}JSONObject = json["{{var.name}}"] as? JSONObject,
-              let {{var.name}} = try? {{var.unwrappedTypeName}}FromJavascript(unpacking: {{var.name}}JSONObject)
-            {% else %}
-              let {{var.name}} = {{var.unwrappedTypeName}}(json["{{var.name}}"])
-            {% endif %}
-            {% if not forloop.last %},{% endif %}
-          {% endfor %}
+          let jsIdentifier = Int(json["oid"])
+          {% if protocol.allVariables.count > 0 %},
+            {% for var in protocol.allVariables %}
+              {% if var.type.annotations.jsAvailable and var.type.kind == "protocol" %}
+                let {{var.name}}JSONObject = json["{{var.name}}"] as? JSONObject,
+                let {{var.name}} = try? {{var.unwrappedTypeName}}FromJavascript(unpacking: {{var.name}}JSONObject, client: client)
+              {% else %}
+                let {{var.name}} = {{var.unwrappedTypeName}}(json["{{var.name}}"])
+              {% endif %}
+              {% if not forloop.last %},{% endif %}
+            {% endfor %}
+          {% endif %}
         else {
             fatalError("JavaScript object does not conform to protocol '{{protocol.name}}'")
         }
 
+        self.jsIdentifier = jsIdentifier
+        self.client = client
         {% for var in protocol.allVariables %}
           self.{{var.name}} = {{var.name}}
         {% endfor %}
     }
+
+    {% for method in protocol.allMethods %}
+      func {{method.name}} {
+          try! client.callMethod("{{method.shortName}}", on: self.jsIdentifier)
+      }
+    {% endfor %}
 }
 
 {% endfor %}

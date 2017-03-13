@@ -18,6 +18,7 @@ class SwiftLogger {
     
     /// sourcery: jsAvailable
     static func logUsingRecursiveProtocol(object: LogType) {
+        try! object.sayHello()
         print("text1: \(object.text1.text)")
         print("text2: \(object.text2.text)")
     }
@@ -36,5 +37,7 @@ protocol LogType {
     
     var text1: TextContaining { get }
     var text2: TextContaining { get }
+    
+    func sayHello() throws
     
 }

@@ -31,54 +31,73 @@ extension Int32 {
 }
 
 internal class JavascriptClient {
+    var tcpClient: TCPClient
     
+    var nextMessageId = -1
+    
+    init(_ client: TCPClient) throws {
+        self.tcpClient = client
+        
+        do {
+            var buffer = [UInt8]()
+            
+            func bufferHasMessage() throws -> Bool {
+                guard buffer.count >= 4 else { return false }
+                let length: Int32 = try fromBytes(buffer[0..<4])
+                guard buffer.count >= Int(length)+4 else { return false }
+                return true
+            }
+            
+            while true {
+                // receive data
+                if !(try bufferHasMessage()) {
+                    let data = try client.receiveAll()
+                    buffer += data
+                }
+                
+                guard try bufferHasMessage() else { continue }
+                
+                let length: Int32 = try fromBytes(buffer[0..<4])
+                
+                let messageData = Array(buffer[4..<Int(length+4)])
+                buffer.removeSubrange(0..<Int(length)+4)
+                
+                let json = try JSON.parse(from: messageData, allowingComments: false) as! JSONObject
+                
+                try callStatic(typeName: String(json["t"])!, methodName: String(json["m"])!, arguments: json["args"] as? JSONObject, client: self)
+                
+                if let id = Int(json["id"]) {
+                    try self.send([
+                        "id": id
+                    ])
+                }
+            }
+        } catch {
+            print("error: \(error)")
+        }
+    }
+    
+    private func send(_ message: JSONObject) throws {
+        let messageBytes = message.serialize()
+        try tcpClient.send(bytes: Int32(messageBytes.count).makeBytes() + messageBytes)
+    }
+    
+    func callMethod(_ name: String, on oid: Int) throws {
+        let messageId = nextMessageId
+        nextMessageId -= 1
+        
+        try self.send([
+            "id": messageId,
+            "a": "call",
+            "oid": oid,
+            "f": name
+        ])
+    }
 }
 
 class SwiftJS {
     static func run() throws {
         let server = try SynchronousTCPServer(port: 8403)
-        
-        try server.startWithHandler { client in
-            let js = JavascriptClient()
-            do {
-                var buffer = [UInt8]()
-                
-                func bufferHasMessage() throws -> Bool {
-                    guard buffer.count >= 4 else { return false }
-                    let length: Int32 = try fromBytes(buffer[0..<4])
-                    guard buffer.count >= Int(length)+4 else { return false }
-                    return true
-                }
-                
-                while true {
-                    // receive data
-                    if !(try bufferHasMessage()) {
-                        let data = try client.receiveAll()
-                        buffer += data
-                    }
-                    
-                    guard try bufferHasMessage() else { continue }
-                    
-                    let length: Int32 = try fromBytes(buffer[0..<4])
-                    
-                    let messageData = Array(buffer[4..<Int(length+4)])
-                    buffer.removeSubrange(0..<Int(length)+4)
-                    
-                    let json = try JSON.parse(from: messageData, allowingComments: false) as! JSONObject
-                    
-                    try callStatic(typeName: String(json["t"])!, methodName: String(json["m"])!, arguments: json["args"] as? JSONObject)
-                    
-                    if let id = Int(json["id"]) {
-                        let responseMessage: JSONObject = [
-                            "id": id
-                        ]
-                        let responseMessageBytes = responseMessage.serialize()
-                        try client.send(bytes: Int32(responseMessageBytes.count).makeBytes() + responseMessageBytes)
-                    }
-                }
-            } catch {
-                print("error: \(error)")
-            }
-        }
+        try server.startWithHandler { _ = try JavascriptClient($0) }
     }
 }
