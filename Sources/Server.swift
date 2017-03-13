@@ -17,6 +17,19 @@ public func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Iterato
     return UnsafeRawPointer([UInt8](bytes)).assumingMemoryBound(to: T.self).pointee
 }
 
+extension Int32 {
+    internal func makeBytes() -> [UInt8] {
+        let integer = self.littleEndian
+        
+        return [
+            UInt8(integer & 0xFF),
+            UInt8((integer >> 8) & 0xFF),
+            UInt8((integer >> 16) & 0xFF),
+            UInt8((integer >> 24) & 0xFF),
+        ]
+    }
+}
+
 internal class JavascriptClient {
     
 }
@@ -26,6 +39,7 @@ class SwiftJS {
         let server = try SynchronousTCPServer(port: 8403)
         
         try server.startWithHandler { client in
+            let js = JavascriptClient()
             do {
                 var buffer = [UInt8]()
                 
@@ -53,6 +67,14 @@ class SwiftJS {
                     let json = try JSON.parse(from: messageData, allowingComments: false) as! JSONObject
                     
                     try callStatic(typeName: String(json["t"])!, methodName: String(json["m"])!, arguments: json["args"] as? JSONObject)
+                    
+                    if let id = Int(json["id"]) {
+                        let responseMessage: JSONObject = [
+                            "id": id
+                        ]
+                        let responseMessageBytes = responseMessage.serialize()
+                        try client.send(bytes: Int32(responseMessageBytes.count).makeBytes() + responseMessageBytes)
+                    }
                 }
             } catch {
                 print("error: \(error)")
