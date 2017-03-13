@@ -4,6 +4,8 @@ Very experimental Swift <-> Javascript interaction using NodeJS. Currently in de
 
 SwiftJS works by generating Swift and Javascript code. The intention is to make it possible to re-use NodeJS libraries from Swift or to provide a cross-platform Javascript plugin API for your Swift projects.
 
+SwiftJS uses [Sourcery](https://github.com/krzysztofzablocki/Sourcery) to generate Swift and Javascript.
+
 ## Usage
 
 Mark swift types, functions and variables as "jsAvailable":
