@@ -1,6 +1,8 @@
 # SwiftJS
 
-Very experimental Swift <-> NodeJS binding. Currently in development and not suitable for including in other projects.
+Very experimental Swift <-> Javascript interaction using NodeJS. Currently in development and not suitable for including in other projects.
+
+SwiftJS works by generating Swift and Javascript code. The intention is to make it possible to re-use NodeJS libraries from Swift or to provide a cross-platform Javascript plugin API for your Swift projects.
 
 ## Usage
 
