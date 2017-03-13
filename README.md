@@ -1,6 +1,6 @@
 # SwiftJS
 
-Very experimental Swift <-> NodeJS binding.
+Very experimental Swift <-> NodeJS binding. Currently in development and not suitable for including in other projects.
 
 ## Usage
 
@@ -13,6 +13,7 @@ class SwiftClass {
     static func sample() {
         print("hello from swift");
     }
+}
 ```
 
 Then in your JavaScript:
@@ -26,7 +27,45 @@ SwiftClass.sample();
 You need to run two instances of sourcery:
 
 `sourcery --watch Sources SourceryTemplates/JavascriptTemplate.js.stencil js/generated.js`
+
 `sourcery --watch Sources SourceryTemplates/SwiftTemplate.swift.stencil Sources/Generated.swift`
+
+## Javascript Object Conformance to Swift Protocols
+
+To use Javascript objects as arguments to Swift methods, define a Swift protocol and mark it as `jsAvailable`:
+
+```swift
+/// sourcery: jsAvailable
+protocol Person {
+	var firstName: String { get }
+	var lastName: String { get }
+	var email: String { get }
+}
+```
+
+Because of the dynamic nature of Javascript, protocol conformance is implicit. All Javascript objects that statisfy the protocol requirements can be used.
+
+Example function:
+
+```swift
+class Logger {
+	static func logName(person: Person) {
+		print("\(person.firstName) \(person.lastName)")
+	}
+}
+```
+
+Call from Javascript:
+
+```javascript
+Logger.logName({
+	firstName: "Henk",
+	lastName: "Example",
+	email: "henk@example.com"
+});
+```
+
+If the given Javascript object does not satisfy the protocol requirements, an exception (on the Javascript side) is raised.
 
 ## Socket protocol
 
