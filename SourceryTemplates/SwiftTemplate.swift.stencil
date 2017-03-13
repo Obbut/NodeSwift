@@ -1,0 +1,13 @@
+func callStatic(typeName: String, methodName: String) {
+  switch (typeName, methodName) {
+  {% for type in types.all|annotated:"jsAvailable" %}
+    {% for method in type.allMethods|annotated:"jsAvailable" %}
+      case ("{{type.name}}", "{{method.shortName}}"):
+        {{ type.name }}.{{ method.shortName }}()
+
+      default:
+        fatalError()
+    {% endfor %}
+  {% endfor %}
+  }
+}
