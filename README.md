@@ -28,14 +28,14 @@ class SwiftClass {
 Then in your JavaScript:
 
 ```javascript
-let SwiftClass = require('./generated').SwiftClass;
+let SwiftClass = require('./ecmaswift').SwiftClass;
 
 SwiftClass.sample();
 ```
 
 You need to run two instances of sourcery:
 
-`sourcery --watch Sources SourceryTemplates/JavascriptTemplate.js.stencil js/generated.js`
+`sourcery --watch Sources SourceryTemplates/ECMASwift.js js/ecmaswift.js`
 
 `sourcery --watch Sources SourceryTemplates/SwiftTemplate.swift.stencil Sources/Generated.swift`
 

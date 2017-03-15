@@ -1,4 +1,4 @@
-let SwiftLogger = require('./generated').SwiftLogger;
+let SwiftLogger = require('./ecmaswift').SwiftLogger;
 
 SwiftLogger.logTextContaining({
   text: "henk is een hondje",

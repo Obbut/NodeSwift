@@ -1,14 +1,14 @@
 var packedObjects = {};
 var nextPackedObjectIdentifier = 0;
 
-{% for protocol in types.protocols|annotated:"jsAvailable" %}
+<% types.protocols.filter(p => p.annotations.jsAvailable).forEach(protocol => { %>
 
 /**
-Packs a JavaScript object conforming to the {{protocol.name}} protocol defined in Swift
+Packs a JavaScript object conforming to the <%- protocol.name -%> protocol defined in Swift
 
 @parameter {object} obj The object to pack
 */
-function pack{{protocol.name}}(obj) {
+function pack<%- protocol.name -%>(obj) {
   let oid = nextPackedObjectIdentifier;
   nextPackedObjectIdentifier++;
 
@@ -17,17 +17,18 @@ function pack{{protocol.name}}(obj) {
   return {
     // assign the object identifier
     oid
-    {% for var in protocol.allVariables %},
-      {% if var.type.annotations.jsAvailable and var.type.kind == "protocol" %}
-      {{ var.name }}: pack{{var.type.name}}(obj.{{var.name}})
-      {% else %}
-      {{ var.name }}: obj.{{ var.name }}
-      {% endif %}
-    {% endfor %}
+    <% protocol.allVariables.forEach(variable => { %>,
+      <% if (variable.type && variable.type.annotations.jsAvailable && variable.type.kind == "protocol") { %>
+        // The variable is a bridged protocol
+      <%- variable.name -%>: pack<%- variable.type.name -%>(obj.<%- variable.name -%>)
+      <% } else { %>
+      <%- variable.name -%>: obj.<%- variable.name -%>
+      <% } %>
+    <% }) %>
   };
 }
 
-{% endfor %}
+<% }) %>
 
 var s = null;
 
@@ -108,31 +109,31 @@ function handleServerMessage(message) {
   }
 }
 
-{% for type in types.all|annotated:"jsAvailable" %}
+<% types.all.filter(t => t.annotations.jsAvailable).forEach(type => { %>
 
-module.exports.{{type.name}} = {
-  {% for method in type.allMethods|annotated:"jsAvailable" %}
-    {{ method.shortName }}: function(
-      {% for param in method.parameters %}
-        {{ param.name }}{% if not forloop.last %},{% endif %}
-      {% endfor %}
+module.exports.<%- type.name -%> = {
+  <% type.allMethods.filter(m => m.annotations.jsAvailable).forEach(method => { %>
+    <%- method.shortName -%>: function(-%>
+      <% method.parameters.forEach((param, index) => { %>-%>
+        <%- param.name -%><% if (index != method.parameters.length - 1) { %>,<%}%>-%>
+      <% }) %>-%>
     ) {
-      return swiftMessage({a: "callStatic", t: "{{type.name}}", m: "{{method.shortName}}",
-        {% if method.parameters.count > 0 %}
+      return swiftMessage({a: "callStatic", t: "<%- type.name -%>", m: "<%- method.shortName -%>",
+        <% if (method.parameters.length > 0) { %>
         args: {
-          {% for param in method.parameters %}
-            {% if param.type.annotations.jsAvailable and param.type.kind == "protocol" %}
-            {{ param.name }}: pack{{param.unwrappedTypeName}}({{param.name}})
-            {% else %}
-            {{ param.name }}
-            {% endif %}
-            {% if not forloop.last %},{% endif %}
-          {% endfor %}
+          <% method.parameters.forEach((param, index) => { %>
+            <% if (param.type && param.type.annotations.jsAvailable && param.type.kind == "protocol") { %>
+              <%- param.name -%>: pack<%- param.unwrappedTypeName -%>(<%- param.name -%>)
+            <% } else { %>
+              <%- param.name -%>
+            <% } %>
+            <% if (index != method.parameters.length - 1) { %>,<% } %>
+          <% }) %>
         }
-        {% endif %}
+        <% } %>
       })
     },
-  {% endfor %}
+  <% }) %>
 };
 
-{% endfor %}
+<% }) %>

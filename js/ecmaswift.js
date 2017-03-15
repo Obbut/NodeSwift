@@ -6,6 +6,7 @@ var packedObjects = {};
 var nextPackedObjectIdentifier = 0;
 
 
+
 /**
 Packs a JavaScript object conforming to the LogType protocol defined in Swift
 
@@ -21,11 +22,19 @@ function packLogType(obj) {
     // assign the object identifier
     oid
     ,
+      
+        // The variable is a bridged protocol
       text1: packTextContaining(obj.text1)
+      
     ,
+      
+        // The variable is a bridged protocol
       text2: packTextContaining(obj.text2)
+      
+    
   };
 }
+
 
 
 /**
@@ -43,9 +52,12 @@ function packTextContaining(obj) {
     // assign the object identifier
     oid
     ,
-      text: obj.text
+      
+      text: obj.text      
+    
   };
 }
+
 
 
 var s = null;
@@ -128,38 +140,59 @@ function handleServerMessage(message) {
 }
 
 
+
 module.exports.SwiftLogger = {
-    testFunc: function(
-    ) {
+  
+    testFunc: function(          ) {
       return swiftMessage({a: "callStatic", t: "SwiftLogger", m: "testFunc",
+        
       })
     },
-    testFuncWithArgument: function(
-        text
-    ) {
+  
+    testFuncWithArgument: function(              text          ) {
       return swiftMessage({a: "callStatic", t: "SwiftLogger", m: "testFuncWithArgument",
+        
         args: {
-            text
+          
+            
+              text            
+            
+          
         }
+        
       })
     },
-    logTextContaining: function(
-        containing
-    ) {
+  
+    logTextContaining: function(              containing          ) {
       return swiftMessage({a: "callStatic", t: "SwiftLogger", m: "logTextContaining",
+        
         args: {
-            containing: packTextContaining(containing)
+          
+            
+              containing: packTextContaining(containing)
+            
+            
+          
         }
+        
       })
     },
-    logUsingRecursiveProtocol: function(
-        object
-    ) {
+  
+    logUsingRecursiveProtocol: function(              object          ) {
       return swiftMessage({a: "callStatic", t: "SwiftLogger", m: "logUsingRecursiveProtocol",
+        
         args: {
-            object: packLogType(object)
+          
+            
+              object: packLogType(object)
+            
+            
+          
         }
+        
       })
     },
+  
 };
+
 
